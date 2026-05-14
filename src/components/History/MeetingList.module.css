@@ -1,0 +1,128 @@
+.list {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.headerRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 80px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-tertiary);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  gap: var(--space-3);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 80px;
+  padding: var(--space-3) var(--space-4);
+  gap: var(--space-3);
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.row:hover {
+  background: var(--glass-hover);
+}
+
+.titleCell {
+  min-width: 0;
+}
+
+.meetingTitle {
+  font-weight: var(--weight-medium);
+  font-size: var(--font-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.cell {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: all var(--transition-fast);
+}
+
+.row:hover .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  color: var(--accent-danger);
+  background: var(--accent-danger-dim);
+}
+
+.chevron {
+  color: var(--text-tertiary);
+}
+
+/* Empty */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) var(--space-4);
+  text-align: center;
+}
+
+.emptyIcon {
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+}
+
+.emptyText {
+  font-size: var(--font-lg);
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+}
+
+.emptyHint {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 768px) {
+  .headerRow,
+  .row {
+    grid-template-columns: 1fr 1fr 80px;
+  }
+
+  .headerRow > :nth-child(3),
+  .headerRow > :nth-child(4),
+  .headerRow > :nth-child(5),
+  .row > :nth-child(3),
+  .row > :nth-child(4),
+  .row > :nth-child(5) {
+    display: none;
+  }
+}

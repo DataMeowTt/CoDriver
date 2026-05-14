@@ -1,0 +1,79 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.recordBtn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-primary);
+  background: var(--accent-primary-dim);
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.recordBtn:hover {
+  background: var(--accent-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-glow-primary);
+  transform: scale(1.05);
+}
+
+.recordBtn.recording {
+  border-color: var(--accent-danger);
+  background: var(--accent-danger-dim);
+  color: var(--accent-danger);
+  animation: pulse-recording 2s infinite;
+}
+
+.recordBtn.recording:hover {
+  background: var(--accent-danger);
+  color: white;
+}
+
+.recordBtn.paused {
+  border-color: var(--accent-warning);
+  background: var(--accent-warning-dim);
+  color: var(--accent-warning);
+}
+
+.recordBtn.paused:hover {
+  background: var(--accent-warning);
+  color: var(--text-inverse);
+}
+
+.stopBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-medium);
+  background: var(--glass);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.stopBtn:hover {
+  background: var(--accent-danger-dim);
+  border-color: var(--accent-danger);
+  color: var(--accent-danger);
+}
+
+.label {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
+}

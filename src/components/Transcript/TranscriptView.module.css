@@ -1,0 +1,122 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.segment {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.segment:hover {
+  background: var(--glass);
+}
+
+.timestamp {
+  flex-shrink: 0;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-primary);
+  background: var(--accent-primary-dim);
+  border: none;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: all var(--transition-fast);
+  margin-top: 2px;
+}
+
+.timestamp:hover {
+  background: var(--accent-primary);
+  color: var(--text-inverse);
+}
+
+.speaker {
+  flex-shrink: 0;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--accent-warning);
+  margin-top: 2px;
+}
+
+.speaker::after {
+  content: ':';
+}
+
+.text {
+  flex: 1;
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+  line-height: var(--leading-relaxed);
+  position: relative;
+}
+
+.editBtn {
+  display: inline-flex;
+  opacity: 0;
+  margin-left: var(--space-2);
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  vertical-align: middle;
+}
+
+.segment:hover .editBtn {
+  opacity: 1;
+}
+
+.editBtn:hover {
+  color: var(--accent-primary);
+  background: var(--accent-primary-dim);
+}
+
+.editRow {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.editInput {
+  font-size: var(--font-sm) !important;
+  padding: 4px 8px !important;
+}
+
+.highlight {
+  background: hsla(38, 92%, 50%, 0.3);
+  color: var(--accent-warning);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+}
+
+.emptyText {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+}
+
+.emptyHint {
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
