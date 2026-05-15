@@ -59,21 +59,42 @@ ${transcript}`;
 
   const content = response.choices[0].message.content;
 
-  // Try to parse JSON from response
   try {
-    // Extract JSON from potential markdown code blocks
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, content];
-    return JSON.parse(jsonMatch[1].trim());
+    const parsed = JSON.parse(jsonMatch[1].trim());
+    return validateSummary(parsed);
   } catch {
-    // Fallback structure
-    return {
-      brief: content,
-      keyPoints: [],
-      decisions: [],
-      tasks: [],
-      openIssues: [],
-    };
+    return { brief: content, keyPoints: [], decisions: [], tasks: [], openIssues: [] };
   }
+}
+
+function toStringArray(val) {
+  if (!Array.isArray(val)) return [];
+  return val.filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim());
+}
+
+function toTaskArray(val) {
+  if (!Array.isArray(val)) return [];
+  return val
+    .filter((x) => x && typeof x === 'object' && typeof x.task === 'string' && x.task.trim())
+    .map((x) => ({
+      task: x.task.trim(),
+      assignee: typeof x.assignee === 'string' ? x.assignee.trim() : '',
+      deadline: typeof x.deadline === 'string' ? x.deadline.trim() : '',
+    }));
+}
+
+function validateSummary(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('Summary is not an object');
+  }
+  return {
+    brief: typeof raw.brief === 'string' ? raw.brief.trim() : '',
+    keyPoints: toStringArray(raw.keyPoints),
+    decisions: toStringArray(raw.decisions),
+    tasks: toTaskArray(raw.tasks),
+    openIssues: toStringArray(raw.openIssues),
+  };
 }
 
 /**

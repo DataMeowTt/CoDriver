@@ -98,12 +98,13 @@ export async function saveAudioBlob(meetingId, blob) {
  * Save summary
  */
 export async function saveSummary(meetingId, summaryData) {
-  // Remove existing summary if any
-  await db.summaries.where('meetingId').equals(meetingId).delete();
-  await db.summaries.add({
-    meetingId,
-    type: 'full',
-    ...summaryData,
+  await db.transaction('rw', db.summaries, async () => {
+    await db.summaries.where('meetingId').equals(meetingId).delete();
+    await db.summaries.add({
+      meetingId,
+      type: 'full',
+      ...summaryData,
+    });
   });
 }
 

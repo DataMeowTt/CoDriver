@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
@@ -8,10 +9,17 @@ import HistoryPage from './pages/HistoryPage';
 import MeetingDetailPage from './pages/MeetingDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import useUIStore from './stores/uiStore';
+import { requestPersistentStorage, checkStorageQuota } from './utils/storageGuard';
 import './App.css';
 
 function App() {
   const sidebarOpen = useUIStore((s) => s.sidebarOpen);
+  const addToast = useUIStore((s) => s.addToast);
+
+  useEffect(() => {
+    requestPersistentStorage(addToast);
+    checkStorageQuota(addToast);
+  }, []);
 
   return (
     <div className="app-layout fade-in">
