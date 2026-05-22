@@ -262,6 +262,61 @@ macro_rules! perf_debug {
 
 **Pattern**: Tauri commands update Rust state → Emit events → Frontend listeners update React state → Context propagates to components
 
+### 5. Auto Meeting Detection (Linux-First)
+
+**Location**:
+- Rust detector: `frontend/src-tauri/src/auto_meeting.rs`
+- Frontend listener: `frontend/src/contexts/AutoMeetingProvider.tsx`
+- Settings toggle: `frontend/src/components/RecordingSettings.tsx`
+
+**Purpose**: Locally detect likely meetings and prompt the user before starting or stopping recording. The detector never starts or stops recording directly; it only emits Tauri events. The frontend provider reuses the existing `recordingService` and post-processing flow.
+
+**Preferences** are stored with Tauri Store in `auto_meeting_preferences.json`:
+- `enabled` defaults to `false`
+- `prompt_to_start` defaults to `true`
+- `prompt_to_stop` defaults to `true`
+- `start_confidence_seconds` defaults to `6`
+- `stop_grace_seconds` defaults to `30`
+- `allowed_apps` defaults to Zoom, Microsoft Teams, Google Meet, Slack, Discord
+
+**Tauri commands**:
+- `get_auto_meeting_preferences`
+- `set_auto_meeting_preferences`
+- `get_auto_meeting_status`
+- `start_auto_meeting_detection`
+- `stop_auto_meeting_detection`
+
+**Tauri events**:
+- `auto-meeting-detected`
+- `auto-meeting-ended`
+- `auto-meeting-status-changed`
+
+**Linux detection signals**:
+- Polls every 2 seconds using `ps`, `pw-cli`, and `wpctl`
+- Requires both a meeting-app/process candidate and PipeWire media evidence
+- Browser Google Meet is special on GNOME/Wayland because Brave may not expose `meet.google.com` in `ps`
+- For Brave/Chrome/Chromium/Firefox, the detector accepts browser capture evidence such as `video_capture`, `audio.mojom.AudioService`, or PipeWire clients like `Brave input`
+
+**Debugging auto detection**:
+```bash
+ps -eo pid,comm,args | grep -Ei 'brave|chrome|chromium|firefox|meet.google|zoom|teams|slack|discord'
+pw-cli ls Node
+wpctl status
+cat ~/.local/share/com.meetily.ai/auto_meeting_preferences.json
+```
+
+**Testing auto detection**:
+```bash
+cd frontend/src-tauri
+cargo check
+cargo test auto_meeting
+```
+
+**Gotchas**:
+- Restart the Tauri app after Rust detector changes; the running app uses the old binary.
+- On GNOME/Wayland, browser tab URLs are often not visible from process args, so PipeWire capture signals are important.
+- Generic browser audio should not be enough by itself; keep detection conservative to avoid prompts for music/videos.
+
 ## Common Development Tasks
 
 ### Adding a New Audio Device Platform
@@ -439,6 +494,7 @@ $env:RUST_LOG="debug"; ./clean_run_windows.bat
 
 **Core Coordination**:
 - [frontend/src-tauri/src/lib.rs](frontend/src-tauri/src/lib.rs) - Main Tauri entry point, command registration
+- [frontend/src-tauri/src/auto_meeting.rs](frontend/src-tauri/src/auto_meeting.rs) - Local auto meeting detector, preferences, events
 - [frontend/src-tauri/src/audio/mod.rs](frontend/src-tauri/src/audio/mod.rs) - Audio module exports
 - [backend/app/main.py](backend/app/main.py) - FastAPI application, API endpoints
 
@@ -449,7 +505,9 @@ $env:RUST_LOG="debug"; ./clean_run_windows.bat
 
 **UI Components**:
 - [frontend/src/app/page.tsx](frontend/src/app/page.tsx) - Main recording interface
+- [frontend/src/contexts/AutoMeetingProvider.tsx](frontend/src/contexts/AutoMeetingProvider.tsx) - Auto meeting prompt listener and recording handoff
 - [frontend/src/components/Sidebar/SidebarProvider.tsx](frontend/src/components/Sidebar/SidebarProvider.tsx) - Global state management
+- [frontend/src/components/RecordingSettings.tsx](frontend/src/components/RecordingSettings.tsx) - Recording preferences and auto-detect toggle
 
 **Whisper Integration**:
 - [frontend/src-tauri/src/whisper_engine/whisper_engine.rs](frontend/src-tauri/src/whisper_engine/whisper_engine.rs) - Whisper model management and transcription

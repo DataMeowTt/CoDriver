@@ -5,6 +5,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { DeviceSelection, SelectedDevices } from '@/components/DeviceSelection';
 import Analytics from '@/lib/analytics';
 import { toast } from 'sonner';
+import type { AutoMeetingPreferences } from '@/contexts/AutoMeetingProvider';
 
 export interface RecordingPreferences {
   save_folder: string;
@@ -29,6 +30,14 @@ export function RecordingSettings({ onSave }: RecordingSettingsProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showRecordingNotification, setShowRecordingNotification] = useState(true);
+  const [autoMeetingPreferences, setAutoMeetingPreferences] = useState<AutoMeetingPreferences>({
+    enabled: false,
+    prompt_to_start: true,
+    prompt_to_stop: true,
+    start_confidence_seconds: 6,
+    stop_grace_seconds: 30,
+    allowed_apps: ['Zoom', 'Microsoft Teams', 'Google Meet', 'Slack', 'Discord'],
+  });
 
   // Load recording preferences on component mount
   useEffect(() => {
@@ -51,6 +60,20 @@ export function RecordingSettings({ onSave }: RecordingSettingsProps) {
     };
 
     loadPreferences();
+  }, []);
+
+  // Load auto meeting preferences on component mount
+  useEffect(() => {
+    const loadAutoMeetingPreferences = async () => {
+      try {
+        const prefs = await invoke<AutoMeetingPreferences>('get_auto_meeting_preferences');
+        setAutoMeetingPreferences(prefs);
+      } catch (error) {
+        console.error('Failed to load auto meeting preferences:', error);
+      }
+    };
+
+    loadAutoMeetingPreferences();
   }, []);
 
   // Load recording notification preference
@@ -118,6 +141,28 @@ export function RecordingSettings({ onSave }: RecordingSettingsProps) {
     } catch (error) {
       console.error('Failed to save notification preference:', error);
       toast.error('Failed to save preference');
+    }
+  };
+
+  const handleAutoMeetingToggle = async (enabled: boolean) => {
+    const newPreferences = { ...autoMeetingPreferences, enabled };
+    setAutoMeetingPreferences(newPreferences);
+
+    try {
+      await invoke('set_auto_meeting_preferences', { preferences: newPreferences });
+      window.dispatchEvent(new CustomEvent('auto-meeting-preferences-updated', {
+        detail: newPreferences,
+      }));
+      toast.success(enabled ? 'Auto-detect meetings enabled' : 'Auto-detect meetings disabled');
+      await Analytics.track('auto_meeting_detection_toggled', {
+        enabled: enabled.toString(),
+      });
+    } catch (error) {
+      console.error('Failed to save auto meeting preferences:', error);
+      setAutoMeetingPreferences(autoMeetingPreferences);
+      toast.error('Failed to save auto-detect preference', {
+        description: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -224,6 +269,21 @@ export function RecordingSettings({ onSave }: RecordingSettingsProps) {
         <Switch
           checked={showRecordingNotification}
           onCheckedChange={handleNotificationToggle}
+        />
+      </div>
+
+      {/* Auto Meeting Detection Toggle */}
+      <div className="flex items-center justify-between p-4 border rounded-lg">
+        <div className="flex-1">
+          <div className="font-medium">Auto-detect meetings</div>
+          <div className="text-sm text-gray-600">
+            Uses local app and PipeWire audio activity to prompt before recording meetings.
+          </div>
+        </div>
+        <Switch
+          checked={autoMeetingPreferences.enabled}
+          onCheckedChange={handleAutoMeetingToggle}
+          disabled={saving}
         />
       </div>
 
