@@ -1,263 +1,446 @@
-<div align="center" style="border-bottom: none">
-    <h1>
-        <img src="docs/Meetily-6.png" style="border-radius: 10px;" />
-        <br>
-        Privacy-First AI Meeting Assistant
-    </h1>
-    <a href="https://trendshift.io/repositories/13272" target="_blank"><img src="https://trendshift.io/api/badge/repositories/13272" alt="Zackriya-Solutions%2Fmeeting-minutes | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-    <br>
-    <br>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases/"><img src="https://img.shields.io/badge/Pre_Release-Link-brightgreen" alt="Pre-Release"></a>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/zackriya-solutions/meeting-minutes?style=flat">
-</a>
- <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"> <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/zackriya-solutions/meeting-minutes/total?style=plastic"> </a>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"><img src="https://img.shields.io/badge/License-MIT-blue" alt="License"></a>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"><img src="https://img.shields.io/badge/Supported_OS-macOS,_Windows-white" alt="Supported OS"></a>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"><img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/zackriya-solutions/meeting-minutes?include_prereleases&color=yellow">
-</a>
-    <br>
-    <h3>
-    <br>
-    Open Source • Privacy-First • Enterprise-Ready
-    </h3>
-    <p align="center">
-    Get latest <a href="https://www.zackriya.com/meetily-subscribe/"><b>Product updates</b></a> <br><br>
-    <a href="https://meetily.ai"><b>Website</b></a> •
-    <a href="https://www.linkedin.com/company/106363062/"><b>LinkedIn</b></a> •
-    <a href="https://discord.gg/crRymMQBFH"><b>Meetily Discord</b></a> •
-    <a href="https://discord.com/invite/vCFJvN4BwJ"><b>Privacy-First AI</b></a> •
-    <a href="https://www.reddit.com/r/meetily/"><b>Reddit</b></a>
-</p>
-    <p align="center">
+# Meetily — Trợ lý cuộc họp AI chạy cục bộ
 
-A privacy-first AI meeting assistant that captures, transcribes, and summarizes meetings entirely on your infrastructure. Built by expert AI engineers passionate about data sovereignty and open source solutions. Perfect for enterprises that need advanced meeting intelligence without compromising on privacy, compliance, or control.
+<div align="center">
 
-</p>
+**Ghi âm · Phiên âm · Tóm tắt — Hoàn toàn trên máy của bạn**
 
-<p align="center">
-    <img src="docs/meetily_demo.gif" width="650" alt="Meetily Demo" />
-    <br>
-    <a href="https://youtu.be/6FnhSC_eSz8">View full Demo Video</a>
-</p>
+![Version](https://img.shields.io/badge/version-0.3.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
+![Rust](https://img.shields.io/badge/Rust-1.77+-orange)
+![Node](https://img.shields.io/badge/Node.js-22+-brightgreen)
 
 </div>
 
 ---
 
-> **🎉 New: Meetily PRO Available** - Looking for enhanced accuracy and advanced features? Check out our professional-grade solution with custom summary templates, advanced exports (PDF, DOCX), auto-meeting detection, built-in GDPR compliance, and many more. **This Community Edition remains forever free & open source**. [Learn more about PRO →](https://meetily.ai/pro/)
+## Mục lục
+
+- [Tổng quan](#tổng-quan)
+- [Tính năng](#tính-năng)
+- [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
+- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+- [Cài đặt và chạy](#cài-đặt-và-chạy)
+- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+- [Luồng hoạt động](#luồng-hoạt-động)
+- [Kiểm thử](#kiểm-thử)
+- [Giới hạn và hướng phát triển](#giới-hạn-và-hướng-phát-triển)
 
 ---
 
-<details>
-<summary>Table of Contents</summary>
+## Tổng quan
 
-- [Introduction](#introduction)
-- [Why Meetily?](#why-meetily)
-- [Features](#features)
-- [Installation](#installation)
-- [Key Features in Action](#key-features-in-action)
-- [System Architecture](#system-architecture)
-- [For Developers](#for-developers)
-- [Meetily PRO](#meetily-pro)
-- [Contributing](#contributing)
-- [License](#license)
+**Meetily** là ứng dụng desktop AI hỗ trợ ghi âm, phiên âm thời gian thực và tóm tắt cuộc họp, chạy **hoàn toàn trên máy cục bộ** mà không cần kết nối internet hay gửi dữ liệu lên cloud.
 
-</details>
+### Vấn đề giải quyết
 
-## Introduction
+Các công cụ ghi họp phổ biến hiện nay (Otter.ai, Fireflies, Microsoft Copilot...) đều gửi âm thanh và nội dung cuộc họp lên máy chủ của nhà cung cấp, đặt ra rủi ro nghiêm trọng về bảo mật và quyền riêng tư — đặc biệt với các cuộc họp chứa thông tin nhạy cảm về kinh doanh, pháp lý hay kỹ thuật.
 
-Meetily is a privacy-first AI meeting assistant that runs entirely on your local machine. It captures your meetings, transcribes them in real-time, and generates summaries, all without sending any data to the cloud. This makes it the perfect solution for professionals and enterprises who need to maintain complete control over their sensitive information.
+Meetily giải quyết vấn đề này bằng cách:
 
-## Why Meetily?
+| Vấn đề | Giải pháp |
+|---|---|
+| Dữ liệu gửi lên cloud | Toàn bộ xử lý diễn ra trên máy người dùng |
+| Chi phí API cao | Dùng Whisper.cpp + Parakeet (open source, miễn phí) |
+| Phụ thuộc một LLM duy nhất | Hỗ trợ Ollama, Claude, GPT, Groq, OpenRouter, custom endpoint |
+| Mất dữ liệu nếu app crash | Transcript recovery từ IndexedDB local storage |
 
-While there are many meeting transcription tools available, this solution stands out by offering:
+---
 
-- **Privacy First:** All processing happens locally on your device.
-- **Cost-Effective:** Uses open-source AI models instead of expensive APIs.
-- **Flexible:** Works offline and supports multiple meeting platforms.
-- **Customizable:** Self-host and modify for your specific needs.
+## Tính năng
 
-<details>
-<summary>The Privacy Problem</summary>
+- **Ghi âm thời gian thực** — Capture đồng thời microphone và system audio, trộn âm thanh chuyên nghiệp với RMS ducking
+- **Phiên âm tại chỗ** — Sử dụng Whisper.cpp hoặc Parakeet, hỗ trợ tăng tốc GPU (Metal/CUDA/Vulkan)
+- **Tóm tắt AI** — Kết nối với Ollama (local), Claude, OpenAI, Groq, OpenRouter hoặc custom endpoint
+- **Lịch sử cuộc họp** — Lưu trữ toàn bộ transcript và tóm tắt vào SQLite cục bộ
+- **Import audio** — Import file âm thanh có sẵn để phiên âm lại
+- **Re-transcription** — Phiên âm lại với model khác hoặc ngôn ngữ khác
+- **Auto meeting detection** — Tự phát hiện khi đang vào cuộc họp (Zoom, Teams, Google Meet...) và gợi ý bắt đầu ghi
+- **Ghi chú rich text** — Editor BlockNote gắn với từng cuộc họp
+- **Transcript recovery** — Khôi phục transcript nếu ứng dụng bị đóng đột ngột
+- **System tray** — Ghi âm ngầm từ khay hệ thống
+- **Đa nền tảng** — macOS, Windows, Linux
 
-Meeting AI tools create significant privacy and compliance risks across all sectors:
+---
 
-- **$4.4M average cost per data breach** (IBM 2024)
-- **€5.88 billion in GDPR fines** issued by 2025
-- **400+ unlawful recording cases** filed in California this year
+## Kiến trúc hệ thống
 
-Whether you're a defense consultant, enterprise executive, legal professional, or healthcare provider, your sensitive discussions shouldn't live on servers you don't control. Cloud meeting tools promise convenience but deliver privacy nightmares with unclear data storage practices and potential unauthorized access.
+Meetily gồm ba thành phần chạy song song:
 
-**Meetily solves this:** Complete data sovereignty on your infrastructure, zero vendor lock-in, and full control over your sensitive conversations.
-
-</details>
-
-## Features
-
-- **Local First:** All processing is done on your machine. No data ever leaves your computer.
-- **Real-time Transcription:** Get a live transcript of your meeting as it happens.
-- **AI-Powered Summaries:** Generate summaries of your meetings using powerful language models.
-- **Multi-Platform:** Works on macOS, Windows, and Linux.
-- **Open Source:** Meetily is open source and free to use.
-- **Flexible AI Provider Support:** Choose from Ollama (local), Claude, Groq, OpenRouter, or use your own OpenAI-compatible endpoint.
-
-## Installation
-
-### 🪟 **Windows**
-
-1. Download the latest `x64-setup.exe` from [Releases](https://github.com/Zackriya-Solutions/meeting-minutes/releases/latest)
-2. Run the installer
-
-### 🍎 **macOS**
-
-1. Download `meetily_0.3.0_aarch64.dmg` from [Releases](https://github.com/Zackriya-Solutions/meeting-minutes/releases/latest)
-2. Open the downloaded `.dmg` file
-3. Drag **Meetily** to your Applications folder
-4. Open **Meetily** from Applications folder
-
-### 🐧 **Linux**
-
-Build from source following our detailed guides:
-
-- [Building on Linux](docs/building_in_linux.md)
-- [General Build Instructions](docs/BUILDING.md)
-
-**Quick start:**
-
-```bash
-git clone https://github.com/Zackriya-Solutions/meeting-minutes
-cd meeting-minutes/frontend
-pnpm install
-./build-gpu.sh
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  Desktop App (Tauri + Next.js)                │
+│                                                               │
+│   Next.js UI (React/TypeScript)  ←→  Rust Core (Tauri)      │
+│   - Giao diện người dùng               - Audio capture       │
+│   - React Contexts (state)             - Whisper/Parakeet     │
+│   - Tauri IPC calls                    - LLM summary          │
+│   - IndexedDB (recovery)               - SQLite database      │
+│                                        - System tray          │
+└──────────────────────────┬───────────────────────────────────┘
+                           │ HTTP (localhost)
+          ┌────────────────┴─────────────────┐
+          ▼                                   ▼
+┌──────────────────┐               ┌──────────────────────┐
+│  FastAPI Backend │               │  Whisper.cpp Server  │
+│  Python          │               │  C++ binary          │
+│  port 5167       │               │  port 8178           │
+│                  │               │                      │
+│  Meeting CRUD    │               │  STT engine          │
+│  LLM summary     │               │  GPU accelerated     │
+│  SQLite (async)  │               │  REST API            │
+└──────────────────┘               └──────────────────────┘
 ```
 
-## Key Features in Action
+### Audio Pipeline
 
-### 🎯 Local Transcription
+```
+Microphone ──┐
+             ├──→ Ring Buffer (600ms) ──→ RMS Mixing ──→ File (WAV/WebM)
+System Audio─┘         │
+                   VAD Filter
+                        │
+               Whisper / Parakeet
+                        │
+               Transcript Segments ──→ SQLite + UI
+```
 
-Transcribe meetings entirely on your device using **Whisper** or **Parakeet** models. No cloud required.
+### Giao tiếp Frontend ↔ Rust
 
-<p align="center">
-    <img src="docs/home.png" width="650" style="border-radius: 10px;" alt="Meetily Demo" />
-</p>
+**Frontend gọi Rust (Tauri Commands):**
+```typescript
+await invoke('start_recording_with_devices_and_meeting', {
+  mic_device_name: "Built-in Microphone",
+  system_device_name: "BlackHole 2ch",
+  meeting_name: "Team Standup"
+});
+```
 
-### 📥 Import & Enhance `Beta`
+**Rust phát sự kiện về Frontend (Tauri Events):**
+```typescript
+await listen<TranscriptUpdate>('transcript-update', (event) => {
+  setTranscripts(prev => [...prev, event.payload]);
+});
+```
 
-Import existing audio files to generate transcripts, or enhance to re-transcribe any recorded meeting with a different model or language, all processed locally.
+---
 
-> Contributed by [Jeremi Joslin](https://github.com/jeremi), improved by [Vishnu P S](https://github.com/p-s-vishnu) and [Mohammed Safvan](https://github.com/mohammedsafvan)
+## Công nghệ sử dụng
 
-<p align="center">
-    <img src="docs/meetily-export.gif" width="650" style="border-radius: 10px;" alt="Import and Enhance" />
-</p>
+### Frontend (Tauri Desktop App)
 
-### 🤖 AI-Powered Summaries
+| Thành phần | Công nghệ | Phiên bản |
+|---|---|---|
+| Desktop framework | Tauri | 2.6.2 |
+| UI framework | Next.js + React | 14 + 18 |
+| Ngôn ngữ | TypeScript | 5.7 |
+| Styling | Tailwind CSS + Radix UI | 3.4 |
+| Rich text editor | BlockNote | 0.36 |
+| Animations | Framer Motion | 11 |
+| Notifications | Sonner | 2.0 |
+| Package manager | pnpm | — |
 
-Generate meeting summaries with your choice of AI provider. **Ollama** (local) is recommended, with support for Claude, Groq, OpenRouter, and OpenAI.
+### Rust Core (src-tauri)
 
-<p align="center">
-    <img src="docs/summary.png" width="650" style="border-radius: 10px;" alt="Summary generation" />
-</p>
+| Thành phần | Thư viện |
+|---|---|
+| Speech-to-text | whisper-rs (Whisper.cpp bindings) |
+| Alternative STT | ort (ONNX Runtime — Parakeet) |
+| Audio I/O | cpal |
+| Audio resampling | rubato |
+| Database | sqlx (SQLite async) |
+| Async runtime | tokio |
+| HTTP client | reqwest |
+| GPU acceleration | Metal / CUDA / Vulkan (qua Cargo features) |
 
-<p align="center">
-    <img src="docs/editor1.png" width="650" style="border-radius: 10px;" alt="Editor Summary generation" />
-</p>
+### Backend (FastAPI)
 
-### 🔒 Privacy-First Design
+| Thành phần | Thư viện | Phiên bản |
+|---|---|---|
+| Web framework | FastAPI | 0.115.9 |
+| Database | aiosqlite | 0.21.0 |
+| LLM client | pydantic-ai | 0.2.15 |
+| Ollama client | ollama | 0.5.2 |
+| ASGI server | uvicorn | 0.34.0 |
 
-All data stays on your machine. Transcription models, recordings, and transcripts are stored locally.
+### LLM Providers hỗ trợ
 
-<p align="center">
-    <img src="docs/settings.png" width="650" style="border-radius: 10px;" alt="Local Transcription and storage" />
-</p>
+| Provider | Loại | Ghi chú |
+|---|---|---|
+| Ollama | Local (khuyến nghị) | Chạy hoàn toàn offline |
+| Claude (Anthropic) | Cloud | Cần API key |
+| OpenAI (GPT) | Cloud | Cần API key |
+| Groq | Cloud | Cần API key |
+| OpenRouter | Cloud | Cần API key |
+| Custom endpoint | Local/Cloud | Bất kỳ OpenAI-compatible API |
 
-### 🌐 Custom OpenAI Endpoint Support
+### Whisper Models
 
-Use your own OpenAI-compatible endpoint for AI summaries. Perfect for organizations with custom AI infrastructure or preferred providers.
+| Model | Kích thước | Tốc độ | Độ chính xác |
+|---|---|---|---|
+| tiny | ~75MB | Rất nhanh | Thấp |
+| base | ~150MB | Nhanh | Trung bình thấp |
+| small | ~500MB | Trung bình | Trung bình |
+| medium | ~1.5GB | Chậm | Tốt |
+| large-v3 | ~3GB | Chậm nhất | Tốt nhất |
+| large-v3-turbo | ~1.5GB | Nhanh hơn large | Gần large-v3 |
 
-<p align="center">
-    <img src="docs/custom.png" width="650" style="border-radius: 10px;" alt="Custom OpenAI Endpoint Configuration" />
-</p>
+---
 
-### 🎙️ Professional Audio Mixing
+## Cài đặt và chạy
 
-Capture microphone and system audio simultaneously with intelligent ducking and clipping prevention.
+### Yêu cầu hệ thống
 
-<p align="center">
-    <img src="docs/audio.png" width="650" style="border-radius: 10px;" alt="Device selection" />
-</p>
+- **Node.js** 22.12+
+- **pnpm** (cài qua `npm install -g pnpm`)
+- **Rust** 1.77+ (cài tại https://rustup.rs)
+- **Python** 3.9+
+- **macOS**: Xcode Command Line Tools (`xcode-select --install`)
+- **Windows**: Visual Studio Build Tools với C++ workload
 
-### ⚡ GPU Acceleration
+### Bước 1 — Clone và cài Rust
 
-Built-in support for hardware acceleration across platforms:
+```bash
+git clone <repo-url>
+cd meetily
 
-- **macOS**: Apple Silicon (Metal) + CoreML
-- **Windows/Linux**: NVIDIA (CUDA), AMD/Intel (Vulkan)
+# Cài Rust nếu chưa có
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+```
 
-Automatically enabled at build time - no configuration needed.
+### Bước 2 — Build Backend + Whisper (chạy 1 lần)
 
-## System Architecture
+```bash
+cd backend
+./build_whisper.sh small   # Tải model ~500MB, build Whisper.cpp từ source
+```
 
-Meetily is a single, self-contained application built with [Tauri](https://tauri.app/). It uses a Rust-based backend to handle all the core logic, and a Next.js frontend for the user interface.
+> Thay `small` bằng `tiny` (nhanh hơn, kém chính xác) hoặc `large-v3` (chậm hơn, chính xác nhất).
 
-For more details, see the [Architecture documentation](docs/architecture.md).
+### Bước 3 — Chạy Backend (Terminal 1)
 
-## For Developers
+```bash
+cd backend
+./clean_start_backend.sh
+# Khi thấy "All services started" → Whisper (port 8178) + FastAPI (port 5167) đã sẵn sàng
+```
 
-If you want to contribute to Meetily or build it from source, you'll need to have Rust and Node.js installed. For detailed build instructions, please see the [Building from Source guide](docs/BUILDING.md).
+### Bước 4 — Chạy Frontend (Terminal 2)
 
-## Meetily Pro
+```bash
+cd frontend
+./clean_run.sh             # macOS (lần đầu mất 10–20 phút do compile Rust)
+# Hoặc: clean_run_windows.bat trên Windows
+```
 
-<p align="center">
-    <img src="docs/pv2.1.png" width="650" style="border-radius: 10px;" alt="Upcoming version" />
-</p>
+### Cổng dịch vụ
 
-**Meetily PRO** is a professional-grade solution with enhanced accuracy and advanced features for serious users and teams. Built on a different codebase with superior transcription models and enterprise-ready capabilities.
+| Dịch vụ | Cổng | Mô tả |
+|---|---|---|
+| Whisper Server | 8178 | STT engine |
+| FastAPI Backend | 5167 | Meeting CRUD + LLM |
+| Next.js Dev | 3118 | UI (chỉ trong dev mode) |
 
-### Key Advantages Over Community Edition:
+### Tăng tốc GPU (tuỳ chọn)
 
-- **Enhanced Accuracy**: Superior transcription models for professional-grade accuracy
-- **Custom Summary Templates**: Tailor summaries to your specific workflow and needs
-- **Advanced Export Options**: PDF, DOCX, and Markdown exports with formatting
-- **Auto-detect and Join Meetings**: Automatic meeting detection and joining
-- **Speaker Identification**: Distinguish between speakers automatically *(Coming Soon)*
-- **Chat with Meetings**: AI-powered meeting insights and queries *(Coming Soon)*
-- **Calendar Integration**: Seamless integration with your calendar *(Coming Soon)*
-- **Self-Hosted Deployment**: Deploy on your own infrastructure for teams
-- **GDPR Compliance Built-In**: Privacy by design architecture with complete audit trails
-- **Priority Support**: Dedicated support for PRO users
+```bash
+cd frontend
+pnpm run tauri:dev:metal    # macOS — Apple Metal (mặc định trên Mac)
+pnpm run tauri:dev:cuda     # Windows/Linux — NVIDIA CUDA
+pnpm run tauri:dev:vulkan   # Windows/Linux — AMD/Intel Vulkan
+```
 
-### Who is PRO for?
+### Docker (Cross-platform)
 
-- **Professionals** who need the highest accuracy for critical meetings
-- **Teams and organizations** (2-100 users) requiring self-hosted deployment
-- **Power users** who need advanced export formats and custom workflows
-- **Compliance-focused organizations** requiring GDPR readiness
+```bash
+cd backend
+./run-docker.sh start --interactive   # macOS/Linux
+.\run-docker.ps1 start -Interactive   # Windows
+```
 
-> **Note:** Meetily Community Edition remains **free & open source forever** with local transcription, AI summaries, and core features. PRO is a separate professional solution for users who need enhanced accuracy and advanced capabilities.
+---
 
-For organizations needing 100+ users or managed compliance solutions, explore [Meetily Enterprise](https://meetily.ai/enterprise/).
+## Cấu trúc thư mục
 
-**Learn more about pricing and features:** [https://meetily.ai/pro/](https://meetily.ai/pro/)
+```
+meetily/
+├── frontend/                        Tauri desktop app
+│   ├── src/                         Next.js frontend (TypeScript)
+│   │   ├── app/                     Pages (App Router)
+│   │   │   ├── page.tsx             Trang ghi âm chính
+│   │   │   ├── meeting-details/     Chi tiết cuộc họp
+│   │   │   ├── notes/               Ghi chú
+│   │   │   └── settings/            Cài đặt
+│   │   ├── components/              React UI components
+│   │   ├── contexts/                Global state (Recording, Transcript, Config...)
+│   │   ├── hooks/                   Custom hooks
+│   │   └── services/                Tauri IPC wrappers
+│   └── src-tauri/                   Rust backend
+│       └── src/
+│           ├── lib.rs               Entry point, đăng ký Tauri commands
+│           ├── audio/               Audio pipeline (35+ modules)
+│           │   ├── pipeline.rs      Ring buffer, VAD, mixing
+│           │   ├── recording_manager.rs
+│           │   ├── devices/         Platform-specific device discovery
+│           │   └── capture/         Audio stream capture
+│           ├── whisper_engine/      Whisper model management + STT
+│           ├── parakeet_engine/     Parakeet ONNX model (alternative STT)
+│           ├── summary/             LLM summarization engine
+│           ├── database/            SQLite via sqlx
+│           ├── auto_meeting.rs      Auto meeting detection
+│           └── notifications/       Desktop notifications
+│
+├── backend/                         FastAPI Python server
+│   ├── app/
+│   │   ├── main.py                  API endpoints
+│   │   ├── db.py                    DatabaseManager
+│   │   ├── transcript_processor.py  LLM summarization (pydantic-ai)
+│   │   └── schema_validator.py      DB schema validation
+│   ├── build_whisper.sh             Build Whisper.cpp + tải model
+│   └── clean_start_backend.sh       Start tất cả services backend
+│
+└── scripts/
+    └── inject_transcript.py         Dev tool: inject CSV transcript vào DB
+```
 
-## Contributing
+---
 
-We welcome contributions from the community! If you have any questions or suggestions, please open an issue or submit a pull request. Please follow the established project structure and guidelines. For more details, refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+## Luồng hoạt động
 
-Thanks for all the contributions. Our community is what makes this project possible.
+### Ghi âm đến tóm tắt (end-to-end)
 
-## License
+```
+1. User nhấn Record
+   └─ TypeScript: invoke('start_recording_with_devices_and_meeting')
+   └─ Rust: khởi tạo AudioStreamManager + AudioPipelineManager + RecordingSaver
 
-MIT License - Feel free to use this project for your own purposes.
+2. Đang ghi âm
+   └─ Mic + System Audio → Ring Buffer (600ms) → RMS Mixing
+   └─ VAD filter lọc khoảng lặng → Whisper Engine
+   └─ Rust emit 'transcript-update' → TranscriptContext → UI realtime
 
-## Acknowledgments
+3. User nhấn Stop
+   └─ Rust: dừng stream, lưu file audio
+   └─ TypeScript: RecordingPostProcessingProvider gửi transcript lên FastAPI
+   └─ FastAPI lưu vào SQLite
 
-- We borrowed some code from [Whisper.cpp](https://github.com/ggerganov/whisper.cpp).
-- We borrowed some code from [Screenpipe](https://github.com/mediar-ai/screenpipe).
-- We borrowed some code from [transcribe-rs](https://crates.io/crates/transcribe-rs).
-- Thanks to **NVIDIA** for developing the **Parakeet** model.
-- Thanks to [istupakov](https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx) for providing the **ONNX conversion** of the Parakeet model.
+4. User nhấn Generate Summary
+   └─ TypeScript: invoke('generate_summary', {provider, model})
+   └─ Rust: summary::service → llm_client → LLM API
+   └─ Kết quả JSON → lưu DB → hiển thị AISummary component
+```
 
-## Star History
+### Backend API chính
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Zackriya-Solutions/meeting-minutes&type=Date)](https://star-history.com/#Zackriya-Solutions/meeting-minutes&Date)
+| Method | Endpoint | Mô tả |
+|---|---|---|
+| GET | `/get-meetings` | Danh sách meetings |
+| GET | `/get-meeting/{id}` | Chi tiết + transcripts |
+| POST | `/process-transcript` | Gọi LLM tạo summary |
+| GET | `/get-summary/{id}` | Lấy summary đã lưu |
+| POST | `/save-transcript` | Lưu transcript mới |
+| POST | `/delete-meeting` | Xóa meeting |
+| POST | `/search-transcripts` | Tìm kiếm transcript |
+| GET/POST | `/get-model-config` / `/save-model-config` | Cấu hình LLM |
+
+---
+
+## Kiểm thử
+
+### Rust Unit Tests — 106 test functions
+
+Các test nằm inline trong module Rust, sử dụng `#[cfg(test)]`:
+
+```bash
+cd frontend/src-tauri
+cargo test                       # Chạy tất cả
+cargo test auto_meeting          # Chỉ test auto meeting detection
+cargo test audio                 # Chỉ test audio pipeline
+```
+
+Phân bổ theo module:
+
+| Module | Số test | Nội dung kiểm thử |
+|---|---|---|
+| `audio/decoder.rs` | 16 | Format conversion, resample 48kHz→16kHz, stereo→mono |
+| `audio/import.rs` | 15 | Import pipeline, phân đoạn silence, metadata validation |
+| `audio/device_detection.rs` | 9 | AirPods, Bluetooth buffer timeout, virtual device |
+| `auto_meeting.rs` | 5 | PipeWire signals, browser capture, confidence window |
+| `audio/vad.rs` | 5 | Chunked processing, cancellation, segmentation |
+| `audio/ffmpeg_mixer.rs` | 4 | Audio mixing |
+| `summary/templates/` | 3 | Template validation, serialization |
+| `audio/buffer_pool.rs` | 3 | RAII, pool max size |
+| `audio/hardware_detector.rs` | 3 | GPU detection |
+| `summary/summary_engine/client.rs` | 3 | LLM request/response |
+| Các module khác | ~40 | diagnostics, permissions, system audio... |
+
+Ví dụ test:
+
+```rust
+// auto_meeting.rs
+#[test]
+fn detects_after_confidence_window() { ... }
+
+#[test]
+fn detects_browser_capture_signals() { ... }
+
+// audio/decoder.rs
+#[test]
+fn test_to_whisper_format_resamples_48k_to_16k() { ... }
+
+// audio/vad.rs
+#[test]
+fn test_vad_chunked_vs_single_processing() { ... }
+```
+
+### Công cụ test thủ công
+
+**`scripts/inject_transcript.py`** — Inject CSV transcript vào database để test UI mà không cần ghi âm thật:
+
+```bash
+python scripts/inject_transcript.py \
+  --csv transcript.csv \
+  --title "Test Meeting"
+```
+
+**`scripts/test-update-locally.js`** — Server HTTP port 8080 phục vụ `latest.json` để test luồng auto-update:
+
+```bash
+node scripts/test-update-locally.js
+```
+
+### Phạm vi kiểm thử hiện tại
+
+| Loại | Trạng thái |
+|---|---|
+| Rust unit tests (audio, STT, auto meeting) | Có — 106 tests |
+| Frontend unit tests (Jest/Vitest) | Chưa có |
+| Frontend E2E tests (Playwright/Cypress) | Chưa có |
+| Backend Python tests (pytest) | Chưa có |
+| CI tự động chạy tests | Chưa có (CI chỉ build) |
+
+---
+
+## Giới hạn và hướng phát triển
+
+### Giới hạn hiện tại
+
+- System audio trên macOS yêu cầu cài thêm **BlackHole** (virtual audio device)
+- Model Whisper lớn (large-v3, ~3GB) cần tải lần đầu và RAM nhiều
+- LLM tóm tắt qua Ollama cần GPU hoặc thời gian chờ dài trên CPU
+- Frontend và Backend Python chưa có automated tests
+
+### Hướng phát triển tiếp theo
+
+- Nhận diện người nói (Speaker Diarization)
+- Tích hợp lịch (Google Calendar, Outlook)
+- Hỗ trợ thêm ngôn ngữ phiên âm
+- Tối ưu pipeline cho máy cấu hình thấp
+- Bổ sung test coverage cho Frontend và Backend
+
+---
+
+## Giấy phép
+
+MIT License — xem file [LICENSE.md](LICENSE.md) để biết chi tiết.
