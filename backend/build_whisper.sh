@@ -62,8 +62,12 @@ log_info "Verifying server files..."
 ls "examples/server/" || handle_error "Failed to list server files"
 
 log_section "Building Whisper Server"
-log_info "Installing required dependencies..."
-brew install libomp llvm cmake || handle_error "Failed to install dependencies"
+if [ "$(uname)" = "Darwin" ]; then
+    log_info "macOS detected, installing dependencies via Homebrew..."
+    brew install libomp llvm cmake || handle_error "Failed to install dependencies"
+else
+    log_info "Linux detected. Skipping Homebrew install since build tools are already present."
+fi
 
 log_info "Building whisper.cpp..."
 rm -rf build

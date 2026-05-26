@@ -21,6 +21,7 @@ use super::audio_processing::create_meeting_folder;
 use super::common::{create_transcript_segments, split_segment_at_silence, write_transcripts_json};
 use super::constants::AUDIO_EXTENSIONS;
 use super::recording_preferences::get_default_recordings_folder;
+use super::scheduler::{scheduler, AudioJobClass};
 
 /// Global flag to track if import is in progress
 static IMPORT_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
@@ -356,10 +357,11 @@ async fn run_import<R: Runtime>(
 
     let src = source.clone();
     let dst = dest_path.clone();
-    tokio::task::spawn_blocking(move || std::fs::copy(&src, &dst))
-        .await
-        .map_err(|e| anyhow!("Copy task join error: {}", e))?
-        .map_err(|e| anyhow!("Failed to copy audio file: {}", e))?;
+    scheduler()
+        .run_blocking(AudioJobClass::BatchPreprocess, move || {
+            std::fs::copy(&src, &dst).map_err(|e| anyhow!("Failed to copy audio file: {}", e))
+        })
+        .await?;
 
     info!("Copied audio to: {}", dest_path.display());
 
@@ -381,11 +383,11 @@ async fn run_import<R: Runtime>(
     });
 
     let path_for_decode = dest_path.clone();
-    let decoded = tokio::task::spawn_blocking(move || {
-        decode_audio_file_with_progress(&path_for_decode, Some(decode_progress))
-    })
-    .await
-    .map_err(|e| anyhow!("Decode task join error: {}", e))??;
+    let decoded = scheduler()
+        .run_blocking(AudioJobClass::BatchPreprocess, move || {
+            decode_audio_file_with_progress(&path_for_decode, Some(decode_progress))
+        })
+        .await?;
     let duration_seconds = decoded.duration_seconds;
 
     info!(
@@ -409,11 +411,11 @@ async fn run_import<R: Runtime>(
         emit_progress(&app_for_resample, "resampling", overall_progress, msg);
     });
 
-    let audio_samples = tokio::task::spawn_blocking(move || {
-        decoded.to_whisper_format_with_progress(Some(resample_progress))
-    })
-    .await
-    .map_err(|e| anyhow!("Resample task join error: {}", e))?;
+    let audio_samples = scheduler()
+        .run_blocking(AudioJobClass::BatchPreprocess, move || {
+            Ok(decoded.to_whisper_format_with_progress(Some(resample_progress)))
+        })
+        .await?;
     info!(
         "Converted to 16kHz mono format: {} samples",
         audio_samples.len()
@@ -430,28 +432,28 @@ async fn run_import<R: Runtime>(
     // Use VAD to find speech segments
     let app_for_vad = app.clone();
 
-    let speech_segments = tokio::task::spawn_blocking(move || {
-        get_speech_chunks_with_progress(
-            &audio_samples,
-            VAD_REDEMPTION_TIME_MS,
-            |vad_progress, segments_found| {
-                let overall_progress = 25 + (vad_progress as f32 * 0.05) as u32;
-                emit_progress(
-                    &app_for_vad,
-                    "vad",
-                    overall_progress,
-                    &format!(
-                        "Detecting speech segments... {}% ({} found)",
-                        vad_progress, segments_found
-                    ),
-                );
-                !IMPORT_CANCELLED.load(Ordering::SeqCst)
-            },
-        )
-    })
-    .await
-    .map_err(|e| anyhow!("VAD task panicked: {}", e))?
-    .map_err(|e| anyhow!("VAD processing failed: {}", e))?;
+    let speech_segments = scheduler()
+        .run_blocking(AudioJobClass::BatchPreprocess, move || {
+            get_speech_chunks_with_progress(
+                &audio_samples,
+                VAD_REDEMPTION_TIME_MS,
+                |vad_progress, segments_found| {
+                    let overall_progress = 25 + (vad_progress as f32 * 0.05) as u32;
+                    emit_progress(
+                        &app_for_vad,
+                        "vad",
+                        overall_progress,
+                        &format!(
+                            "Detecting speech segments... {}% ({} found)",
+                            vad_progress, segments_found
+                        ),
+                    );
+                    !IMPORT_CANCELLED.load(Ordering::SeqCst)
+                },
+            )
+            .map_err(|e| anyhow!("VAD processing failed: {}", e))
+        })
+        .await?;
 
     let total_segments = speech_segments.len();
     info!("VAD detected {} speech segments (redemption_time={}ms)", total_segments, VAD_REDEMPTION_TIME_MS);
@@ -579,19 +581,30 @@ async fn run_import<R: Runtime>(
         }
 
         // Transcribe
+        let samples = segment.samples.clone();
+        let language_for_segment = language.clone();
+
         let (text, conf) = if use_parakeet {
             let engine = parakeet_engine.as_ref().unwrap();
-            let text = engine
-                .transcribe_audio(segment.samples.clone())
-                .await
-                .map_err(|e| anyhow!("Parakeet transcription failed on segment {}: {}", i, e))?;
+            let text = scheduler()
+                .run_async(AudioJobClass::BatchTranscription, || async {
+                    engine
+                        .transcribe_audio(samples)
+                        .await
+                        .map_err(|e| anyhow!("Parakeet transcription failed on segment {}: {}", i, e))
+                })
+                .await?;
             (text, 0.9f32)
         } else {
             let engine = whisper_engine.as_ref().unwrap();
-            let (text, conf, _) = engine
-                .transcribe_audio_with_confidence(segment.samples.clone(), language.clone())
-                .await
-                .map_err(|e| anyhow!("Whisper transcription failed on segment {}: {}", i, e))?;
+            let (text, conf, _) = scheduler()
+                .run_async(AudioJobClass::BatchTranscription, || async {
+                    engine
+                        .transcribe_audio_with_confidence(samples, language_for_segment)
+                        .await
+                        .map_err(|e| anyhow!("Whisper transcription failed on segment {}: {}", i, e))
+                })
+                .await?;
             (text, conf)
         };
 

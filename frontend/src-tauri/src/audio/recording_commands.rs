@@ -245,6 +245,7 @@ pub async fn start_recording_with_meeting_name<R: Runtime>(
     // Set recording flag and reset speech detection flag
     info!("🔍 Setting IS_RECORDING to true and resetting SPEECH_DETECTED_EMITTED");
     IS_RECORDING.store(true, Ordering::SeqCst);
+    super::scheduler::set_recording_active(true);
     reset_speech_detected_flag(); // Reset for new recording session
 
     // Start optimized parallel transcription task and store handle
@@ -413,6 +414,7 @@ pub async fn start_recording_with_devices_and_meeting<R: Runtime>(
     // Set recording flag and reset speech detection flag
     info!("🔍 Setting IS_RECORDING to true and resetting SPEECH_DETECTED_EMITTED");
     IS_RECORDING.store(true, Ordering::SeqCst);
+    super::scheduler::set_recording_active(true);
     reset_speech_detected_flag(); // Reset for new recording session
 
     // Start optimized parallel transcription task and store handle
@@ -843,6 +845,7 @@ pub async fn stop_recording<R: Runtime>(
     // Set recording flag to false
     info!("🔍 Setting IS_RECORDING to false");
     IS_RECORDING.store(false, Ordering::SeqCst);
+    super::scheduler::set_recording_active(false);
 
     // Step 4.5: Prepare metadata for frontend (NO database save)
     // NOTE: We do NOT save to database here. The frontend will save after all transcripts are displayed.

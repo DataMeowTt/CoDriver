@@ -660,6 +660,7 @@ pub fn run() {
             audio::recording_preferences::get_current_audio_backend,
             audio::recording_preferences::set_audio_backend,
             audio::recording_preferences::get_audio_backend_info,
+            audio::scheduler::get_audio_scheduler_status_command,
             // Auto meeting detection commands
             auto_meeting::get_auto_meeting_preferences,
             auto_meeting::set_auto_meeting_preferences,

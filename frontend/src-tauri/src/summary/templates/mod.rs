@@ -12,11 +12,11 @@
 //!
 //! # Usage
 //!
-//! ```rust
-//! use crate::summary::templates;
+//! ```rust,no_run
+//! use app_lib::summary::templates;
 //!
 //! // Load a specific template
-//! let template = templates::get_template("daily_standup")?;
+//! let template = templates::get_template("daily_standup").unwrap();
 //!
 //! // Generate markdown structure
 //! let markdown = template.to_markdown_structure();

@@ -417,10 +417,13 @@ mod tests {
         let total_samples = (duration_seconds * sample_rate as f32) as usize;
         let mut samples = vec![0.0f32; total_samples];
 
-        // Create speech-like patterns: bursts of sine waves with varying amplitude
+        // Create speech-like patterns: bursts of synthesized vowels with formants
         // Speech every 10 seconds for 5 seconds
         let speech_interval = 10.0; // seconds between speech starts
         let speech_duration = 5.0;  // seconds of speech
+
+        let mut last_pulse_sample = 0;
+        let pulse_period = (sample_rate as f32 / 130.0) as usize; // F0 = 130Hz
 
         for i in 0..total_samples {
             let time = i as f32 / sample_rate as f32;
@@ -428,19 +431,20 @@ mod tests {
 
             // Speech occurs in the first `speech_duration` seconds of each cycle
             if cycle_time < speech_duration {
-                // Generate speech-like signal: multiple frequencies with amplitude modulation
-                let freq1 = 200.0 + (time * 50.0).sin() * 100.0; // Varying fundamental
-                let freq2 = freq1 * 2.0; // Harmonic
-                let freq3 = freq1 * 3.0; // Another harmonic
+                if i % pulse_period == 0 {
+                    last_pulse_sample = i;
+                }
+                let t_since_pulse = (i - last_pulse_sample) as f32 / sample_rate as f32;
 
-                let amplitude = 0.3 + 0.1 * (time * 5.0).sin(); // Amplitude modulation
-                samples[i] = amplitude * (
-                    0.5 * (2.0 * std::f32::consts::PI * freq1 * time).sin() +
-                    0.3 * (2.0 * std::f32::consts::PI * freq2 * time).sin() +
-                    0.2 * (2.0 * std::f32::consts::PI * freq3 * time).sin()
-                );
+                // Formant 1: 600Hz, decaying (vowel resonance)
+                let s1 = (-150.0 * t_since_pulse).exp() * (2.0 * std::f32::consts::PI * 600.0 * t_since_pulse).sin();
+                // Formant 2: 1700Hz, decaying
+                let s2 = (-200.0 * t_since_pulse).exp() * (2.0 * std::f32::consts::PI * 1700.0 * t_since_pulse).sin();
+
+                samples[i] = 0.35 * (s1 + 0.5 * s2);
+            } else {
+                last_pulse_sample = i; // Keep reset during silence
             }
-            // else: silence (already 0.0)
         }
 
         samples

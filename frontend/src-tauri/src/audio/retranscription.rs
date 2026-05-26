@@ -8,6 +8,7 @@ use crate::config::{DEFAULT_WHISPER_MODEL, DEFAULT_PARAKEET_MODEL};
 use crate::parakeet_engine::ParakeetEngine;
 use crate::state::AppState;
 use crate::whisper_engine::WhisperEngine;
+use super::scheduler::{scheduler, AudioJobClass};
 use anyhow::{anyhow, Result};
 use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -198,11 +199,11 @@ async fn run_retranscription<R: Runtime>(
 
     // Decode the audio file (CPU-intensive, run in blocking task)
     let path_for_decode = audio_path.clone();
-    let decoded = tokio::task::spawn_blocking(move || {
-        decode_audio_file(&path_for_decode)
-    })
-    .await
-    .map_err(|e| anyhow!("Decode task panicked: {}", e))??;
+    let decoded = scheduler()
+        .run_blocking(AudioJobClass::BatchPreprocess, move || {
+            decode_audio_file(&path_for_decode)
+        })
+        .await?;
     let duration_seconds = decoded.duration_seconds;
 
     info!(
@@ -218,11 +219,11 @@ async fn run_retranscription<R: Runtime>(
     }
 
     // Convert to 16kHz mono format (CPU-intensive, run in blocking task)
-    let audio_samples = tokio::task::spawn_blocking(move || {
-        decoded.to_whisper_format()
-    })
-    .await
-    .map_err(|e| anyhow!("Resample task panicked: {}", e))?;
+    let audio_samples = scheduler()
+        .run_blocking(AudioJobClass::BatchPreprocess, move || {
+            Ok(decoded.to_whisper_format())
+        })
+        .await?;
     info!("Converted to 16kHz mono format: {} samples", audio_samples.len());
 
     emit_progress(&app, &meeting_id, "vad", 20, "Detecting speech segments...");
@@ -238,29 +239,29 @@ async fn run_retranscription<R: Runtime>(
     let app_for_vad = app.clone();
     let meeting_id_for_vad = meeting_id.clone();
 
-    let speech_segments = tokio::task::spawn_blocking(move || {
-        get_speech_chunks_with_progress(
-            &audio_samples,
-            VAD_REDEMPTION_TIME_MS,
-            |vad_progress, segments_found| {
-                // Map VAD progress (0-100) to overall progress (20-25)
-                let overall_progress = 20 + (vad_progress as f32 * 0.05) as u32;
-                emit_progress(
-                    &app_for_vad,
-                    &meeting_id_for_vad,
-                    "vad",
-                    overall_progress,
-                    &format!("Detecting speech segments... {}% ({} found)", vad_progress, segments_found),
-                );
+    let speech_segments = scheduler()
+        .run_blocking(AudioJobClass::BatchPreprocess, move || {
+            get_speech_chunks_with_progress(
+                &audio_samples,
+                VAD_REDEMPTION_TIME_MS,
+                |vad_progress, segments_found| {
+                    // Map VAD progress (0-100) to overall progress (20-25)
+                    let overall_progress = 20 + (vad_progress as f32 * 0.05) as u32;
+                    emit_progress(
+                        &app_for_vad,
+                        &meeting_id_for_vad,
+                        "vad",
+                        overall_progress,
+                        &format!("Detecting speech segments... {}% ({} found)", vad_progress, segments_found),
+                    );
 
-                // Return false to cancel if cancellation requested
-                !RETRANSCRIPTION_CANCELLED.load(Ordering::SeqCst)
-            },
-        )
-    })
-    .await
-    .map_err(|e| anyhow!("VAD task panicked: {}", e))?
-    .map_err(|e| anyhow!("VAD processing failed: {}", e))?;
+                    // Return false to cancel if cancellation requested
+                    !RETRANSCRIPTION_CANCELLED.load(Ordering::SeqCst)
+                },
+            )
+            .map_err(|e| anyhow!("VAD processing failed: {}", e))
+        })
+        .await?;
 
     let total_segments = speech_segments.len();
     info!("VAD detected {} speech segments (redemption_time={}ms)", total_segments, VAD_REDEMPTION_TIME_MS);
@@ -368,19 +369,30 @@ async fn run_retranscription<R: Runtime>(
         }
 
         // Transcribe this segment
+        let samples = segment.samples.clone();
+        let language_for_segment = language.clone();
+
         let (text, conf) = if use_parakeet {
             let engine = parakeet_engine.as_ref().unwrap();
-            let text = engine
-                .transcribe_audio(segment.samples.clone())
-                .await
-                .map_err(|e| anyhow!("Parakeet transcription failed on segment {}: {}", i, e))?;
+            let text = scheduler()
+                .run_async(AudioJobClass::BatchTranscription, || async {
+                    engine
+                        .transcribe_audio(samples)
+                        .await
+                        .map_err(|e| anyhow!("Parakeet transcription failed on segment {}: {}", i, e))
+                })
+                .await?;
             (text, 0.9f32)
         } else {
             let engine = whisper_engine.as_ref().unwrap();
-            let (text, conf, _) = engine
-                .transcribe_audio_with_confidence(segment.samples.clone(), language.clone())
-                .await
-                .map_err(|e| anyhow!("Whisper transcription failed on segment {}: {}", i, e))?;
+            let (text, conf, _) = scheduler()
+                .run_async(AudioJobClass::BatchTranscription, || async {
+                    engine
+                        .transcribe_audio_with_confidence(samples, language_for_segment)
+                        .await
+                        .map_err(|e| anyhow!("Whisper transcription failed on segment {}: {}", i, e))
+                })
+                .await?;
             (text, conf)
         };
 

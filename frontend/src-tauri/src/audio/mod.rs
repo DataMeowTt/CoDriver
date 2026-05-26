@@ -31,6 +31,7 @@ pub mod post_processor;
 pub mod hardware_detector;
 pub mod async_logger;
 pub mod batch_processor;
+pub mod scheduler;
 pub mod system_detector;
 pub mod system_audio_commands;
 pub mod device_monitor;  // NEW: Device disconnect/reconnect monitoring
@@ -118,4 +119,3 @@ pub use decoder::{decode_audio_file, DecodedAudio};
 
 // Export audio constants
 pub use constants::AUDIO_EXTENSIONS;
-

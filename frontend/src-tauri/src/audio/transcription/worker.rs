@@ -4,6 +4,7 @@
 
 use super::engine::TranscriptionEngine;
 use super::provider::TranscriptionError;
+use crate::audio::scheduler::{self, AudioJobClass};
 use crate::audio::AudioChunk;
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -65,7 +66,9 @@ pub fn start_transcription_task<R: Runtime>(
 
         // Create parallel workers for faster processing while preserving ALL chunks
         const NUM_WORKERS: usize = 1; // Serial processing ensures transcripts emit in chronological order
-        let (work_sender, work_receiver) = tokio::sync::mpsc::unbounded_channel::<AudioChunk>();
+        const WORK_QUEUE_CAPACITY: usize = 64;
+        let (work_sender, work_receiver) =
+            tokio::sync::mpsc::channel::<AudioChunk>(WORK_QUEUE_CAPACITY);
         let work_receiver = Arc::new(tokio::sync::Mutex::new(work_receiver));
 
         // Track completion: AtomicU64 for chunks queued, AtomicU64 for chunks completed
@@ -119,6 +122,8 @@ pub fn start_transcription_task<R: Runtime>(
 
                     match chunk {
                         Some(chunk) => {
+                            scheduler::scheduler().record_transcription_dequeued();
+
                             // PERFORMANCE OPTIMIZATION: Reduce logging in hot path
                             // Only log every 10th chunk per worker to reduce I/O overhead
                             let should_log_this_chunk = chunk.chunk_id % 10 == 0;
@@ -144,12 +149,20 @@ pub fn start_transcription_task<R: Runtime>(
                             let chunk_duration = chunk.data.len() as f64 / chunk.sample_rate as f64;
 
                             // Transcribe with provider-agnostic approach
-                            match transcribe_chunk_with_provider(
-                                &engine_clone,
-                                chunk,
-                                &app_clone,
-                            )
-                            .await
+                            let transcription_result = scheduler::scheduler()
+                                .run_async(AudioJobClass::RealtimeTranscription, || async {
+                                    transcribe_chunk_with_provider(
+                                        &engine_clone,
+                                        chunk,
+                                        &app_clone,
+                                    )
+                                    .await
+                                    .map_err(|e| anyhow::anyhow!(e.to_string()))
+                                })
+                                .await
+                                .map_err(|e| TranscriptionError::EngineFailed(e.to_string()));
+
+                            match transcription_result
                             {
                                 Ok((transcript, confidence_opt, is_partial)) => {
                                     // Provider-aware confidence threshold
@@ -329,7 +342,10 @@ pub fn start_transcription_task<R: Runtime>(
                 chunk.chunk_id, queued
             );
 
-            if let Err(_) = work_sender.send(chunk) {
+            scheduler::scheduler().record_transcription_queued();
+
+            if let Err(_) = work_sender.send(chunk).await {
+                scheduler::scheduler().record_transcription_dequeued();
                 error!("❌ Failed to send chunk to workers - this should not happen!");
                 break;
             }
